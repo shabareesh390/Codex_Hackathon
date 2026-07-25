@@ -1,0 +1,35 @@
+:root { color: #142018; background: #f6f7ef; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.shell { max-width: 1180px; margin: 0 auto; padding: 32px; }
+.card { background: rgba(255,255,255,.92); border: 1px solid #dfe7d5; border-radius: 24px; box-shadow: 0 18px 50px rgba(32, 47, 34, .08); padding: 24px; }
+.hero { margin-bottom: 18px; background: linear-gradient(135deg, #ffffff 0%, #ecf8e8 100%); }
+.eyebrow { color: #147a3d; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; }
+h1 { margin: 4px 0 10px; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; }
+h2 { display: flex; justify-content: space-between; margin-top: 0; }
+h2 span { border-radius: 999px; background: #eef3ea; padding: 2px 10px; }
+.upload-grid { display: grid; gap: 18px; }
+label { display: grid; gap: 8px; font-weight: 700; }
+input[type=file] { border: 1px dashed #9fb59a; border-radius: 14px; padding: 16px; background: #fbfdf9; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+button, .button-link { border: 0; border-radius: 999px; background: #176b37; color: white; cursor: pointer; font-weight: 800; padding: 12px 18px; text-decoration: none; }
+button.secondary { background: #263b2a; }
+button:disabled { cursor: wait; opacity: .6; }
+.error { color: #a12020; font-weight: 700; }
+.results-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
+.results-header h1 { font-size: clamp(2rem, 4vw, 3rem); }
+.columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.panel { border-top: 8px solid #999; }
+.panel.green { border-color: #2e9f53; }
+.panel.yellow { border-color: #e5b929; }
+.panel.red { border-color: #d9534f; }
+.stack { display: grid; gap: 12px; }
+.tx-card, .transaction { border: 1px solid #e4eadf; border-radius: 16px; padding: 12px; background: #fff; }
+.tx-card p { margin: 6px 0 10px; color: #56615a; }
+.transaction { display: grid; gap: 4px; margin-top: 8px; }
+.transaction span { color: #66736a; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+.transaction b { color: #152117; }
+.transaction small { color: #637066; line-height: 1.35; }
+.trace { margin-top: 18px; }
+pre { max-height: 340px; overflow: auto; border-radius: 16px; background: #0f1b12; color: #d9f4df; padding: 16px; }
+@media (max-width: 900px) { .columns { grid-template-columns: 1fr; } .results-header { align-items: flex-start; flex-direction: column; } }
