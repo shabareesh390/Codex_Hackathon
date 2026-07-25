@@ -75,4 +75,4 @@ def test_openai_failure_falls_back_to_deterministic_scorer(monkeypatch):
     fuzzy = matcher.propose_fuzzy_matches(bank, ledger)
 
     assert fuzzy["matches"]
-    assert any(step["step"] == "warning" and "OpenAI matcher failed" in step["message"] for step in fuzzy["trace"])
+assert any(step["step"] == "warning" and "OpenAI matcher failed" in step["message"] for step in fuzzy["trace"])
