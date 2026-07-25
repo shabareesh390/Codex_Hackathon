@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import importlib.util
 import json
@@ -88,4 +88,4 @@ def _openai_client() -> Any:
 def _explain(bank: Transaction, ledger: Transaction, score: int) -> str:
     date_drift = abs((bank.date - ledger.date).days)
     amount_diff = abs(bank.amount - ledger.amount)
-return f"Likely same payment: amount differs by ₹{amount_diff}, date drift is {date_drift} day(s), and narration context is similar enough for {score}% confidence."
+    return f"Likely same payment: amount differs by ₹{amount_diff}, date drift is {date_drift} day(s), and narration context is similar enough for {score}% confidence."
