@@ -1,7 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { FormEvent, useState } from 'react'
 import { demoBankCsv, demoLedgerCsv, parseTransactions, readFileAsText, reconcileTransactions } from '../lib/api'
-import type { ReconcileResult } from '../types'
 
 export function UploadScreen() {
   const navigate = useNavigate()
@@ -34,26 +33,35 @@ export function UploadScreen() {
   }
 
   return (
-    <main className="shell">
+    <main className="shell upload-shell">
       <section className="hero card">
-        <p className="eyebrow">Indian MSME UPI Reconciliation</p>
-        <h1>Upload bank and ledger exports, then let the agent reconcile them.</h1>
-        <p>Exact rules clear the easy rows first; ambiguous settlements are flagged with AI-style reasoning traces for review.</p>
+        <p className="pill"><i className="ti ti-sparkles" aria-hidden="true" />Agent reconciliation</p>
+        <h1>Reconcile UPI settlements with ledger entries in minutes.</h1>
+        <p className="lede">Upload messy bank exports and sales ledgers, or load demo data for a polished walkthrough of exact matching, review flags, and agent reasoning.</p>
       </section>
-      <form className="card upload-grid" onSubmit={submit}>
-        <label>
-          Bank / UPI statement
-          <input type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={(event) => setBankFile(event.target.files?.[0] ?? null)} />
-        </label>
-        <label>
-          Sales ledger
-          <input type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={(event) => setLedgerFile(event.target.files?.[0] ?? null)} />
-        </label>
-        <div className="actions">
-          <button type="submit" disabled={loading}>{loading ? 'Reconciling…' : 'Reconcile uploads'}</button>
-          <button type="button" className="secondary" onClick={() => void runFlow(true)} disabled={loading}>Load demo data</button>
+
+      <form className="card upload-card" onSubmit={submit}>
+        <div className="dropzone-grid">
+          <label className="dropzone">
+            <span className="dropzone-title"><i className="ti ti-building-bank" aria-hidden="true" />Bank / UPI statement</span>
+            <span className="dropzone-copy">CSV or PDF export from bank, GPay, PhonePe, or settlement provider.</span>
+            <input type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={(event) => setBankFile(event.target.files?.[0] ?? null)} />
+            <span className="file-hint">{bankFile?.name ?? 'Choose statement file'}</span>
+          </label>
+
+          <label className="dropzone">
+            <span className="dropzone-title"><i className="ti ti-receipt-2" aria-hidden="true" />Sales ledger</span>
+            <span className="dropzone-copy">Your shop ledger with dates, amounts, references, and narration.</span>
+            <input type="file" accept=".csv,.pdf,text/csv,application/pdf" onChange={(event) => setLedgerFile(event.target.files?.[0] ?? null)} />
+            <span className="file-hint">{ledgerFile?.name ?? 'Choose ledger file'}</span>
+          </label>
         </div>
-        {error && <p className="error">{error}</p>}
+
+        <div className="actions">
+          <button className="primary-action" type="submit" disabled={loading}>{loading ? 'Reconciling…' : 'Reconcile uploads'}</button>
+          <button type="button" className="ghost-action" onClick={() => void runFlow(true)} disabled={loading}>Load demo data</button>
+        </div>
+        {error && <p className="error"><i className="ti ti-alert-circle" aria-hidden="true" />{error}</p>}
       </form>
     </main>
   )

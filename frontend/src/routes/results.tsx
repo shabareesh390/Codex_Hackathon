@@ -7,24 +7,25 @@ export function ResultsScreen() {
   const result = raw ? (JSON.parse(raw) as ReconcileResult) : null
 
   if (!result) {
-    return <main className="shell card"><h1>No reconciliation run yet.</h1><Link to="/">Go upload files</Link></main>
+    return <main className="shell card empty-state"><p className="pill"><i className="ti ti-info-circle" aria-hidden="true" />Agent reconciliation</p><h1>No reconciliation run yet.</h1><Link className="ghost-action inline-action" to="/">Go upload files</Link></main>
   }
 
   return (
     <main className="shell">
       <header className="results-header card">
         <div>
-          <p className="eyebrow">Results</p>
+          <p className="pill"><i className="ti ti-chart-dots-3" aria-hidden="true" />Agent reconciliation</p>
           <h1>Reconciliation summary</h1>
-          <p>{result.metrics.matched_count} exact matches from {result.metrics.bank_total} bank rows before the review agent handled ambiguous rows.</p>
+          <p className="lede">{result.metrics.matched_count} exact matches from {result.metrics.bank_total} bank rows before the review agent handled ambiguous rows.</p>
         </div>
-        <Link className="button-link" to="/">Run again</Link>
+        <Link className="ghost-action inline-action" to="/">Run again</Link>
       </header>
+
       <section className="columns">
-        <ResultPanel tone="green" title="Matched" count={result.matched.length}>
+        <ResultPanel tone="matched" icon="ti-circle-check" title="Matched" count={result.matched.length}>
           {result.matched.map((match, index) => <MatchCard key={index} match={match} />)}
         </ResultPanel>
-        <ResultPanel tone="yellow" title="Flagged for Review" count={result.flagged_for_review.length}>
+        <ResultPanel tone="flagged" icon="ti-alert-triangle" title="Flagged for review" count={result.flagged_for_review.length}>
           {result.flagged_for_review.map((item, index) => (
             <article className="tx-card" key={index}>
               <strong>{item.type}</strong>
@@ -34,21 +35,28 @@ export function ResultsScreen() {
             </article>
           ))}
         </ResultPanel>
-        <ResultPanel tone="red" title="Unmatched" count={result.unmatched.bank.length + result.unmatched.ledger.length}>
+        <ResultPanel tone="unmatched" icon="ti-circle-x" title="Unmatched" count={result.unmatched.bank.length + result.unmatched.ledger.length}>
           {result.unmatched.bank.map((tx, index) => <TransactionLine key={`b-${index}`} label="Bank" tx={tx} />)}
           {result.unmatched.ledger.map((tx, index) => <TransactionLine key={`l-${index}`} label="Ledger" tx={tx} />)}
         </ResultPanel>
       </section>
+
       <section className="card trace">
-        <h2>Agent trace</h2>
+        <div className="section-heading">
+          <i className="ti ti-terminal-2" aria-hidden="true" />
+          <div>
+            <h2>Agent trace</h2>
+            <p>Plan, proposal, review, and final-decision steps shown for the demo.</p>
+          </div>
+        </div>
         <pre>{JSON.stringify(result.trace.slice(0, 8), null, 2)}</pre>
       </section>
     </main>
   )
 }
 
-function ResultPanel({ tone, title, count, children }: { tone: string; title: string; count: number; children: ReactNode }) {
-  return <section className={`card panel ${tone}`}><h2>{title} <span>{count}</span></h2><div className="stack">{children}</div></section>
+function ResultPanel({ tone, icon, title, count, children }: { tone: string; icon: string; title: string; count: number; children: ReactNode }) {
+  return <section className={`card panel ${tone}`}><h2><span><i className={`ti ${icon}`} aria-hidden="true" />{title}</span><b>{count}</b></h2><div className="stack">{children}</div></section>
 }
 
 function MatchCard({ match }: { match: Match }) {
