@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from dataclasses import dataclass
@@ -37,7 +38,10 @@ def propose_fuzzy_matches(unmatched_bank: list[Transaction], unmatched_ledger: l
         trace.append({"step": "propose", "bank": bank_tx.to_dict(), "candidate_count": len(candidates), "candidate_scores": [{"ledger": tx.to_dict(), "score": score} for _, tx, score in candidates[:5]]})
         if not candidates:
             continue
-        chosen_index, chosen_tx, score = _openai_choose(bank_tx, candidates[:5]) or candidates[0]
+        openai_choice, warning = _openai_choose(bank_tx, candidates[:5])
+        if warning:
+            trace.append({"step": "warning", "message": warning, "fallback": "deterministic_scorer"})
+        chosen_index, chosen_tx, score = openai_choice or candidates[0]
         used_ledger.add(chosen_index)
         proposals.append({"bank": bank_tx, "ledger": chosen_tx, "confidence": score, "explanation": _explain(bank_tx, chosen_tx, score)})
         trace.append({"step": "final_decision", "bank": bank_tx.to_dict(), "ledger": chosen_tx.to_dict(), "confidence": score, "explanation": proposals[-1]["explanation"]})
@@ -54,24 +58,31 @@ def _candidate_score(bank: Transaction, ledger: Transaction, rules: FuzzyRules) 
     return min(100, date_score + amount_score + narration_score + ref_bonus)
 
 
-def _openai_choose(bank: Transaction, candidates: list[tuple[int, Transaction, int]]) -> tuple[int, Transaction, int] | None:
+def _openai_choose(bank: Transaction, candidates: list[tuple[int, Transaction, int]]) -> tuple[tuple[int, Transaction, int] | None, str | None]:
     if not os.getenv("OPENAI_API_KEY"):
-        return None
-    from openai import OpenAI
+        return None, None
+    if importlib.util.find_spec("openai") is None:
+        return None, "OpenAI package is unavailable; falling back to deterministic scorer."
 
-    client = OpenAI()
-    response = client.responses.create(
-        model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
-        input="Choose the best ledger match as JSON with index, confidence, explanation.\n" + json.dumps({"bank": bank.to_dict(), "candidates": [{"index": idx, "transaction": tx.to_dict(), "score": score} for idx, tx, score in candidates]}),
-    )
+    client = _openai_client()
     try:
+        response = client.responses.create(
+            model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
+            input="Choose the best ledger match as JSON with index, confidence, explanation.\n" + json.dumps({"bank": bank.to_dict(), "candidates": [{"index": idx, "transaction": tx.to_dict(), "score": score} for idx, tx, score in candidates]}),
+        )
         data = json.loads(response.output_text)
         for idx, tx, _ in candidates:
             if idx == int(data["index"]):
-                return idx, tx, int(data.get("confidence", _candidate_score(bank, tx, FuzzyRules())))
-    except (ValueError, KeyError, TypeError):
-        return None
-    return None
+                return (idx, tx, int(data.get("confidence", _candidate_score(bank, tx, FuzzyRules())))), None
+        return None, "OpenAI matcher returned no usable candidate; falling back to deterministic scorer."
+    except Exception as exc:
+        return None, f"OpenAI matcher failed ({exc.__class__.__name__}: {exc}); falling back to deterministic scorer."
+
+
+def _openai_client() -> Any:
+    from openai import OpenAI
+
+    return OpenAI()
 
 
 def _explain(bank: Transaction, ledger: Transaction, score: int) -> str:

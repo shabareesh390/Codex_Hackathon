@@ -47,3 +47,18 @@ def test_fuzzy_matcher_and_reviewer_emit_trace_for_ambiguous_rows():
     assert any(step["step"] == "propose" for step in fuzzy["trace"])
     assert reviewed["trace"][0]["step"] == "review_plan"
     assert fuzzy["matches"]
+def test_openai_failure_falls_back_to_deterministic_scorer(monkeypatch):
+    import backend.agent.matcher as matcher
+    class BrokenResponses:
+        def create(self, **kwargs):
+            raise TimeoutError("simulated timeout")
+    class BrokenClient:
+        responses = BrokenResponses()
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    monkeypatch.setattr(matcher.importlib.util, "find_spec", lambda name: object() if name == "openai" else None)
+    monkeypatch.setattr(matcher, "_openai_client", lambda: BrokenClient())
+    bank = parse_csv("Date,Narration,Amount,Reference\n03/07/2026,GPay evening sales,499.50,UPI003\n", "bank")
+    ledger = parse_csv("Date,Narration,Amount,Reference\n04-07-2026,Google Pay evening sales rounded,500,\n", "ledger")
+    fuzzy = matcher.propose_fuzzy_matches(bank, ledger)
+    assert fuzzy["matches"]
+    assert any(step["step"] == "warning" and "OpenAI matcher failed" in step["message"] for step in fuzzy["trace"])
