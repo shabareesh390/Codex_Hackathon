@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import csv
 import io
@@ -141,4 +141,4 @@ def _clean_reference(value: str) -> str:
 def handler(request: Any) -> dict[str, Any]:
     body = json.loads(request.body or "{}") if hasattr(request, "body") else request
     transactions = parse_file(body["file"].encode("utf-8"), body.get("source", "bank"), body.get("filename"))
-return {"statusCode": 200, "body": json.dumps([tx.to_dict() for tx in transactions])}
+    return {"statusCode": 200, "body": json.dumps([tx.to_dict() for tx in transactions])}
