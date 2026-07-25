@@ -36,17 +36,15 @@ def parse_file(file: str | Path | bytes, source: TransactionSource, filename: st
 def parse_csv(text: str, source: TransactionSource) -> list[Transaction]:
     reader = csv.DictReader(io.StringIO(text))
     transactions: list[Transaction] = []
-    for row in reader:
-        transaction = _transaction_from_row(row, source)
-        if transaction is not None:
-            transactions.append(transaction)
+    for row_number, row in enumerate(reader, start=2):
+        transactions.append(_transaction_from_row(row, source, row_number))
     return transactions
 
 
 def parse_pdf(content: bytes | str, source: TransactionSource) -> list[Transaction]:
     text = content if isinstance(content, str) else _extract_pdf_text(content)
     rows = _rows_from_pdf_text(text)
-    return [tx for row in rows if (tx := _transaction_from_row(row, source)) is not None]
+    return [_transaction_from_row(row, source, row_number) for row_number, row in enumerate(rows, start=1)]
 
 
 def _extract_pdf_text(content: bytes) -> str:
@@ -72,14 +70,16 @@ def _rows_from_pdf_text(text: str) -> list[dict[str, str]]:
     return rows
 
 
-def _transaction_from_row(row: dict[str, Any], source: TransactionSource) -> Transaction | None:
+def _transaction_from_row(row: dict[str, Any], source: TransactionSource, row_number: int) -> Transaction:
     normalized = {_normalize_key(key): str(value).strip() for key, value in row.items()}
     raw_date = _first_value(normalized, DATE_COLUMNS)
     raw_amount = _first_value(normalized, AMOUNT_COLUMNS)
     parsed_date = parse_date(raw_date)
     parsed_amount = parse_amount(raw_amount)
-    if parsed_date is None or parsed_amount is None:
-        return None
+    if parsed_date is None:
+        raise ValueError(f"Could not parse date on row {row_number}: raw value {raw_date!r}; row={normalized!r}")
+    if parsed_amount is None:
+        raise ValueError(f"Could not parse amount on row {row_number}: raw value {raw_amount!r}; row={normalized!r}")
     return Transaction(
         date=parsed_date,
         amount=parsed_amount,
@@ -114,7 +114,9 @@ def _read_file(file: str | Path | bytes, filename: str | None) -> tuple[bytes, s
     if isinstance(file, bytes):
         return file, filename or "upload"
     path = Path(file)
-    return path.read_bytes(), filename or path.name
+    if path.suffix.lower() == ".pdf":
+        return path.read_bytes(), filename or path.name
+    return path.read_text(encoding="utf-8").encode("utf-8"), filename or path.name
 
 
 def _is_pdf(content: bytes, filename: str) -> bool:
@@ -138,5 +140,5 @@ def _clean_reference(value: str) -> str:
 
 def handler(request: Any) -> dict[str, Any]:
     body = json.loads(request.body or "{}") if hasattr(request, "body") else request
-    transactions = parse_file(body["file"].encode(), body.get("source", "bank"), body.get("filename"))
+    transactions = parse_file(body["file"].encode("utf-8"), body.get("source", "bank"), body.get("filename"))
     return {"statusCode": 200, "body": json.dumps([tx.to_dict() for tx in transactions])}
