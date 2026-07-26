@@ -1,4 +1,4 @@
-# UPI Recon Agent
+# TallyMatch
 Stateless parsing and reconciliation functions plus a React/Vite frontend for Indian MSME UPI/bank statement reconciliation.
 ## Project layout
 - `api/` — thin Vercel Python serverless entrypoints. Vercel maps `api/parse.py` to `/api/parse` and `api/reconcile.py` to `/api/reconcile`.
